@@ -20,6 +20,8 @@ onebigmmap
 # Tests
 *.log
 *.t
+.*
 
 # Emacs
 *~
+#*
