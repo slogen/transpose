@@ -29,7 +29,6 @@ void _main(int argc, char*argv[]) {
   size_t cols = 1;
   std::string strategy = "mmap1";
   for ( int i = 1; i < argc; ++i ) {
-    std::cerr << i << ": " << argv[i] << std::endl;
     if ( std::string("--rows") == argv[i] )
       rows = atol(argv[++i]);
     else if ( std::string("--cols") == argv[i] )
