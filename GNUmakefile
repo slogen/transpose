@@ -1,7 +1,7 @@
 
 TARGETS = main
 SHARED_SRCS = memmap.cc
-CPPFLAGS=-D__GXX_EXPERIMENTAL_CXX0X__
+CPPFLAGS=
 WFLAGS=-pedantic -W -Wall
 OFLAGS=-O3
 GFLAGS=-ggdb
@@ -32,7 +32,7 @@ test:	$(TARGETS)
 	@date; \
 	for x in $(realpath $^); do \
 	  echo $$x; \
-	  $$x; \
+	  $$x --rows 10000 --cols 10000 --strategy mmap1; \
 	  date; \
 	done
 
