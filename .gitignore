@@ -15,7 +15,7 @@
 *.P
 
 # target
-transpose
+onebigmmap
 
 # Tests
 *.log

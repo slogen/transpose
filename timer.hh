@@ -12,7 +12,10 @@ namespace timing {
     return tv;
   } 
   double inline seconds_since_epoch(const struct timeval& tv) {
-    return double(tv.tv_sec) + double(tv.tv_usec)/1000.0;
+    double secs = double(tv.tv_sec);
+    double usecs = double(tv.tv_usec);
+    std::cerr << "sse " << secs << ", " << usecs << std::endl;
+    return secs + usecs/1000.0;
   }
   double inline seconds_since_epoch() {
     return seconds_since_epoch(tv_currenttime());

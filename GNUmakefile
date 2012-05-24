@@ -1,12 +1,20 @@
 
-SRCS = transpose.cc memmap.cc
-TARGET = transpose
+TARGETS = onebigmmap
+SHARED_SRCS = memmap.cc
+WFLAGS=-pedantic -W -Wall
+OFLAGS=-O0
+GFLAGS=-ggdb
 
-CXXFLAGS=-std=c++0x -pedantic -W -Wall -ggdb -O3
-LDFLAGS=-ggdb
-MAKEDEPEND = g++ -M $(CPPFLAGS) $(CXXFLAGS) -o $*.d $<
 
-all: $(TARGET)
+SHARED_OBJS = $(SHARED_SRCS:.cc=.o)
+
+CXXFLAGS=-std=c++0x $(WFLAGS) $(GFLAGS) $(OFLAGS)
+LDFLAGS=$(GFLAGS)
+CC=g++
+
+all: $(TARGETS)
+
+$(TARGETS): $(SHARED_SRCS:.cc=.o) $(TARGETS:=.o)
 
 %.o : %.cc
 	$(COMPILE.cc) -MD -o $@ $<
@@ -16,12 +24,13 @@ all: $(TARGET)
 	  rm -f $*.d
 
 clean:
-	$(RM) *.o *~ .#* $(TARGET)
+	$(RM) *.o *~ *.P .#* $(TARGETS)
 
-$(TARGET): $(SRCS:.cc=.o)
-	$(CXX) $(LDFLAGS) -o $@ $^
+test:	$(TARGETS)
+	date; \
+	for x in $(realpath $^); do \
+	  $$x; \
+	  date; \
+	done
 
-test:	$(TARGET)
-	(date; /usr/bin/time -v ./$(TARGET); date) | tee test.log
-
--include $(SRCS:.cc=.P)
+-include $(patsubst %.cc,%.P,$(wildcard *.cc))

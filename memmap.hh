@@ -1,3 +1,6 @@
+#ifndef HEADER_MEMMAP_H
+#define HEADER_MEMMAP_H
+
 #include <cstddef>
 
 extern "C" {
@@ -35,3 +38,5 @@ namespace memmap {
 
   
 }
+
+#endif
