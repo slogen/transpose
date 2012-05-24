@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <memory>
 #include <iostream>
+#include <iterator>
 
 extern "C" {
 #include <sys/fcntl.h>
@@ -16,48 +17,97 @@ extern "C" {
 
 namespace transpose {
   template <class T>
+  class testrow {
+  public:
+    size_t row;
+    inline testrow(size_t row_): row(row_) {}
+    inline testrow(const testrow& other): row(other.row) {}
+    inline testrow& operator=(const testrow& other) { row = other.row; return *this; }
+    inline T operator[](int i) const {
+      return static_cast<T>(row << (sizeof(row)*8/2) | i);
+    }
+  };
+  template<class T>
+  class testrow_it: public std::iterator<std::input_iterator_tag, testrow<T> > {
+  public:
+    size_t row;
+    inline testrow_it(size_t row_): row(row_) {}
+    inline testrow_it(const testrow_it<T>& other): row(other.row) {}
+    inline testrow_it& operator=(const testrow_it<T>& other)
+    { row = other.rows; return *this; }
+    inline testrow_it<T>& operator++() { ++row; return *this; }
+    inline testrow_it<T> operator++(int) {
+      auto tmp(*this);
+      operator++();
+      return tmp;
+    };
+    inline bool operator==(const testrow_it<T>& rhs) const { return row == rhs.row; }
+    inline bool operator!=(const testrow_it<T>& rhs) const { return row != rhs.row; }
+    inline testrow<T> operator*() { return testrow<T>(row); }
+  };
+  template<class T>
+  ssize_t rows(const testrow_it<T>& begin, const testrow_it<T>& end) {
+    return end.row - begin.row;
+  }
+  
+
+  template<class T>
+  class testrow_factory {
+  public:
+    typedef struct testrow_it<T> IT;
+    const size_t rows;
+    inline testrow_factory(size_t rows_):
+      rows(rows_) {}
+    inline testrow_it<T> begin() const { return testrow_it<T>(0); }
+    inline testrow_it<T> end() const { return IT(rows); }
+  };
+
+  const double once_in_a_while = 3; // every Xs
+  template <class T>
   class test {
   public:
-    template <class IT>
-    static void data_maker(IT begin, IT end) {
-      for(IT it = begin; it < end; ++it)
-	*it = reinterpret_cast<unsigned int>(&(*it));
-    }
-    
-    const std::size_t rows;
-    const std::size_t cols;
+    class tracer: public timing::posix_timer {
+    public:
+      volatile size_t& count;
+      const size_t cols;
+      double begin;
+      tracer(volatile size_t& count_, size_t cols_):
+	posix_timer(CLOCK_REALTIME, SIGEV_THREAD),
+	count(count_),
+	cols(cols_),
+	begin(timing::seconds_since_epoch())  
+      {
+      }
 
-    const std::size_t test_row_count;
-    T* test_data;
-    std::size_t current_test_row;
-    test(std::size_t rows_, std::size_t cols_, std::size_t test_row_count_):
-      rows(rows_), cols(cols_), 
-      test_row_count(test_row_count_), 
-      test_data(0), current_test_row(0)
-    {
-      test_data = new T[test_row_count*cols];
-      size_t i = 0;
-      for ( size_t row = 0; row < test_row_count; ++row )
-	for ( size_t col = 0; col < cols; ++col )
-	  test_data[row*cols+col] = static_cast<T>(i);
+      virtual void notify() {
+	const double spent = timing::seconds_since_epoch()-begin;
+	const double row_speed = count/spent;
+	const double value_speed = count/spent*cols;
+	const double byte_speed = count/spent*cols*sizeof(T);
+	std::cerr 
+	  << "... " << count << " rows"
+	  << " " << std::fixed << std::setprecision(2) 
+	  << row_speed << " rows/s"
+	  << ", " << value_speed << " values/s"
+	  << ", " << byte_speed/(1024*1024) << " M/s"
+	  << std::endl;
+      }
+    };
+    template<class row_it, class col_it>
+    void write(
+		       row_it in_begin, row_it in_end,
+		       col_it out_begin, col_it out_end) {
+      volatile size_t count = 0;
+      tracer trace(count, cols(out_begin, out_begin));
+      trace.set(once_in_a_while);
+      for ( ; in_begin != in_end; ) {
+	*(out_begin++) = *(in_begin++);
+	++count;
+      }
+      // Notify of close
+      out_begin = out_end;
+      trace.notify();
     }
-	   
-    virtual ~test() {
-      if ( 0 != test_data )
-	delete[] test_data;
-    }
- 
-    virtual const T* next_test_row() 
-    { return test_data + (current_test_row++ % test_row_count)*cols; }
-
-    virtual void write_test_data() = 0;
-
-    virtual void run() {
-      timing::timer t;
-      write_test_data();
-      std::cerr << "Elapsed: " << t.elapsed() << std::endl;
-    }
-
   };
 
 }

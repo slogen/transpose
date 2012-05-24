@@ -1,3 +1,6 @@
+#ifndef HEADER_SBUF_HH
+#define HEADER_SBUF_HH
+
 #include <sstream>
 
 namespace str {
@@ -21,4 +24,4 @@ namespace str {
   }
 }
 
-
+#endif

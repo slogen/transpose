@@ -1,8 +1,9 @@
 
-TARGETS = onebigmmap
+TARGETS = main
 SHARED_SRCS = memmap.cc
+CPPFLAGS=-D__GXX_EXPERIMENTAL_CXX0X__
 WFLAGS=-pedantic -W -Wall
-OFLAGS=-O0
+OFLAGS=-O3
 GFLAGS=-ggdb
 
 
@@ -10,6 +11,7 @@ SHARED_OBJS = $(SHARED_SRCS:.cc=.o)
 
 CXXFLAGS=-std=c++0x $(WFLAGS) $(GFLAGS) $(OFLAGS)
 LDFLAGS=$(GFLAGS)
+LDLIBS=-lrt
 CC=g++
 
 all: $(TARGETS)
