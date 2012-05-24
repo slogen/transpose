@@ -50,7 +50,6 @@ namespace transpose {
     virtual const T* next_test_row() 
     { return test_data + (current_test_row++ % test_row_count)*cols; }
 
-
     virtual void write_test_data() = 0;
 
     virtual void run() {
