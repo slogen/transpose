@@ -10,3 +10,16 @@
 *.lai
 *.la
 *.a
+
+# Dependency files
+*.P
+
+# target
+transpose
+
+# Tests
+*.log
+*.t
+
+# Emacs
+*~
