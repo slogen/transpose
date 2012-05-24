@@ -27,8 +27,9 @@ clean:
 	$(RM) *.o *~ *.P .#* $(TARGETS)
 
 test:	$(TARGETS)
-	date; \
+	@date; \
 	for x in $(realpath $^); do \
+	  echo $$x; \
 	  $$x; \
 	  date; \
 	done
