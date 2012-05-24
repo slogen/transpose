@@ -1,6 +1,9 @@
 #ifndef HEADER_TIMER_HH
 #define HEADER_TIMER_HH
 
+#include <stdexcept>
+#include <iomanip>
+
 extern "C" {
 #include <sys/time.h>
 }
@@ -14,8 +17,8 @@ namespace timing {
   double inline seconds_since_epoch(const struct timeval& tv) {
     double secs = double(tv.tv_sec);
     double usecs = double(tv.tv_usec);
-    std::cerr << "sse " << secs << ", " << usecs << std::endl;
-    return secs + usecs/1000.0;
+    double t = secs + usecs/1000000.0;
+    return t;
   }
   double inline seconds_since_epoch() {
     return seconds_since_epoch(tv_currenttime());
@@ -29,7 +32,9 @@ namespace timing {
     double begin;
     timer(): begin(seconds_since_epoch()) {}
     double elapsed() { 
-      return seconds_since_epoch() - begin;
+      double now = seconds_since_epoch();
+      double diff = now - begin;
+      return diff;
     }
   };
   class reached {
