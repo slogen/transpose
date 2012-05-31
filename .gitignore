@@ -16,12 +16,23 @@
 
 # target
 onebigmmap
+transpose
+colsum
 
 # Tests
 *.log
 *.t
 .*
+*.in
+
 
 # Emacs
 *~
 \#*
+
+# Trace+visual
+*.trace*
+*.mpg
+*.png
+*.sum
+

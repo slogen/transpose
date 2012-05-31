@@ -5,6 +5,7 @@
 #include <memory>
 #include <iterator>
 #include <limits>
+#include <cstring>
 
 extern "C" {
 #include <sys/fcntl.h>
@@ -38,26 +39,17 @@ namespace transpose {
     {
       mm.advise(MADV_RANDOM);
       data = reinterpret_cast<T*>(mm.addr);
+      flush();
     }
-    void sync() { mm.sync(MS_SYNC); }
+    void flush() { mm.sync(MS_SYNC); }
     inline out_it begin() { return out_it(*this, 0); }
     inline out_it end() { return out_it(*this, std::numeric_limits<size_t>::max()); }
-    struct rowptr;
-    struct columnptr {
-    public:
-      T* const col_data;
-      inline columnptr(T* const col_data_): col_data(col_data_) {}
-      inline rowptr operator[](size_t row) { return col_data + row; }
-    };
-    struct rowptr {
-    public:
-      T* const data;
-      inline rowptr(T* const data_): data(data_) {}
-      inline rowptr& operator=(T val) { *data = val; return *this; }
-    };
-    inline columnptr col(size_t idx) { return columnptr(&data[rows*idx]); }
+    inline colptr<T> operator[](size_t idx) 
+    { return colptr<T>(&data[rows*idx], &data[rows*(idx+1)]); }
   };
   ssize_t cols(const onebigmmap<float>& mmap) { return mmap.cols; }
+  ssize_t cols(const onebigmmap<double>& mmap) { return mmap.cols; }
+  void flush(const onebigmmap<float>::out_it& it) { return it.parent.flush(); }
   
 }
 

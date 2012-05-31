@@ -11,8 +11,6 @@ namespace str {
   public:
     std::stringstream s;
     inline sbuf() {}
-    inline sbuf(const char *init): s(init) {}
-    inline sbuf(const std::string& init): s(init) {}
     inline operator std::string(void) const { return str(); }
     inline std::string str() const { return s.str(); }
   };

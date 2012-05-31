@@ -43,7 +43,9 @@ namespace transpose {
     };
     inline bool operator==(const testrow_it<T>& rhs) const { return row == rhs.row; }
     inline bool operator!=(const testrow_it<T>& rhs) const { return row != rhs.row; }
-    inline testrow<T> operator*() { return testrow<T>(row); }
+    inline testrow<T> operator*() const { return testrow<T>(row); }
+    inline size_t operator-(const testrow_it& other)
+    { return row - other.row; }
   };
   template<class T>
   ssize_t rows(const testrow_it<T>& begin, const testrow_it<T>& end) {
@@ -77,6 +79,7 @@ namespace transpose {
 	cols(cols_),
 	begin(timing::seconds_since_epoch())  
       {
+	std::cerr << ">>> BEGIN" << std::endl;
       }
 
       virtual void notify() {

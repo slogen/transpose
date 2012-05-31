@@ -56,6 +56,15 @@ namespace timing {
     virtual ~posix_timer() {
       timer_delete(timerid);
     }
+    void stop(int flags = 0) { 
+      struct itimerspec it = {
+	{ 0, 0 },
+	{ 0, 0 }
+      };
+      if ( 0 != timer_settime(timerid, flags, &it, 0) )
+	throw std::runtime_error("failed to stop timer");
+    }
+      
     void set(double interval) { set(interval, interval); }
     void set(double interval, double initial_expiration, int flags = 0) {
       struct itimerspec it = {
