@@ -2,6 +2,7 @@
 #include <vector>
 #include <iterator>
 #include <algorithm>
+#include <fstream>
 
 #include "memmap.hh"
 #include "sbuf.hh"
@@ -48,7 +49,7 @@ colsum(string infile, size_t rows, size_t cols, PROGRESS& progress, OUT out) {
     rows = in.length / (cols*sizeof(T));
   else if ( cols <= 0 && rows > 0 )
     cols = in.length / (rows*sizeof(T));
-  else
+  else if ( rows <= 0 || cols <= 0 )
     throw std::runtime_error("either rows or cols must be set");
 	    
   in.advise(MADV_SEQUENTIAL);
@@ -78,7 +79,8 @@ int main(int argc, char *argv[]) {
   typedef double T;
   size_t rows = 0;
   size_t cols = 0;
-  std::string infile = "";
+  std::string infile;
+  std::string outfile;
   for ( int i = 1; i < argc; ++i ) {
     const std::string arg(argv[i]);
     if ( arg == "--rows" )
@@ -87,6 +89,8 @@ int main(int argc, char *argv[]) {
       cols = atol(argv[++i]);
     else if ( arg == "--in" || arg == "-i" )
       infile = argv[++i];
+    else if ( arg == "--out" || arg == "-o" )
+      outfile = argv[++i];
     else
       throw std::runtime_error(str::sbuf() << "unknown arg: " << argv[i]);
   }
@@ -94,8 +98,13 @@ int main(int argc, char *argv[]) {
   tracker.value_size = sizeof(T);
   std::vector<T> sums;
   colsum<T>(infile, rows, cols, tracker, back_inserter(sums));
-  std::cout << std::fixed << std::setprecision(0);
+  
+  ofstream fout;
+  if ( outfile != "" )
+    fout.open(outfile);
+  ostream& out(outfile == "" ? std::cout : fout);
+  out << std::fixed << std::setprecision(0);
   for ( size_t i = 0; i < sums.size(); ++i )
-    std::cout << "col:" << i << " sum:" << sums[i] << std::endl;
+    out << "col:" << i << " sum:" << sums[i] << std::endl;
   return 0;
 }
