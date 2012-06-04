@@ -35,10 +35,22 @@ static void fill(string outfile, size_t values, PROGRESS& progress) {
 
 int main(int argc, char *argv[]) {
   typedef double T;
-  (void)argc;
-  (void)argv;
+  size_t rows = 0;
+  size_t cols = 0;
+  std::string outfile = "";
+  for ( int i = 1; i < argc; ++i ) {
+    const std::string arg(argv[i]);
+    if ( arg == "--rows" )
+      rows = atol(argv[++i]);
+    else if ( arg == "--cols" )
+      cols = atol(argv[++i]);
+    else if ( arg == "--out" || arg == "-o" )
+      outfile = argv[++i];
+    else
+      throw std::runtime_error(str::sbuf() << "unknown arg: " << argv[i]);
+  }
   progress<1> tracker;
   tracker.value_size = sizeof(T);
-  fill<T>(string("data.in"), 70000 * 25000, tracker);
+  fill<T>(outfile, rows*cols, tracker);
   return 0;
 }
