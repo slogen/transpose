@@ -103,7 +103,8 @@ static void copy(T* in, T* out, size_t rows, size_t cols,
 }
 
 template <typename T, typename PROGRESS>
-static void transpose(string infile, size_t rows, size_t cols, 
+static void transpose(string infile, string outfile,
+		      size_t rows, size_t cols, 
 		      size_t buffer_col_pages,
 		      PROGRESS& progress) {
   size_t length = rows * cols * sizeof(T);
@@ -120,7 +121,8 @@ static void transpose(string infile, size_t rows, size_t cols,
     throw std::runtime_error("either rows or cols must be set");
 	    
   in.advise(MADV_SEQUENTIAL);
-  string outfile = str::sbuf() << infile << "." << rows << "x" << cols << "T";
+  if ( outfile == "" )
+    outfile = str::sbuf() << infile << "T";
   mapf out(outfile.c_str(), 
 	   O_RDWR | O_CREAT | O_LARGEFILE | O_NOATIME,
 	   0x1FF,
@@ -194,7 +196,8 @@ int main(int argc, char *argv[]) {
   size_t cols = 0;
   bool do_validate = false;
   size_t buffer_col_pages = 0;
-  std::string infile = "";
+  std::string infile;
+  std::string outfile;
   for ( int i = 1; i < argc; ++i ) {
     const std::string arg(argv[i]);
     if ( arg == "--rows" )
@@ -203,6 +206,8 @@ int main(int argc, char *argv[]) {
       cols = atol(argv[++i]);
     else if ( arg == "--in" || arg == "-i" )
       infile = argv[++i];
+    else if ( arg == "--out" || arg == "-o" )
+      outfile = argv[++i];
     else if ( arg == "--validate" )
       do_validate = true;
     else if ( arg == "--no-validate" )
@@ -215,6 +220,6 @@ int main(int argc, char *argv[]) {
   track_progress2<1> tracker;
   tracker.do_validate = do_validate;
   tracker.value_size = sizeof(T);
-  transpose<T>("data.in", rows, cols, buffer_col_pages, tracker);
+  transpose<T>(infile, outfile, rows, cols, buffer_col_pages, tracker);
   return 0;
 }
