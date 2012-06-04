@@ -28,6 +28,9 @@ $(TARGETS): $(SHARED_SRCS:.cc=.o)
 clean:
 	$(RM) *.o *~ *.P .#* $(TARGETS)
 
+realclean: clean
+	$(RM) *.png *.mpg *.trace*
+
 test:	$(TARGETS)
 	@date; \
 	for x in $(realpath $^); do \
