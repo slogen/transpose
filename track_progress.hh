@@ -12,6 +12,8 @@ public:
   size_t value_size;
   inline void ready() {}
   inline void complete() {}
+  template <typename T>
+  inline void process(T t) {}
   inline ignore_progress operator++() { return *this; };
   template <typename T>
   inline ignore_progress operator+=(T t) { return *this; }
@@ -24,7 +26,7 @@ public:
   size_t value_size;
   std::atomic_uint_fast64_t next_count;
   double begin;
-protected:
+private:
   track_progress(const track_progress& other);
   track_progress& operator=(const track_progress& other);
 public:
@@ -34,12 +36,17 @@ public:
     next_count(0),
     begin(timing::seconds_since_epoch()) 
   {}
+  template <typename T>
+  inline void process(T) {}
   inline track_progress& ready() {
     next_count = 0;
     begin = timing::seconds_since_epoch();
     return *this;
   }
-  inline track_progress& operator++() { ++next_count; return *this; }
+  inline track_progress& operator++() { 
+    ++next_count; 
+    return *this;
+  }
   template <typename T>
   inline track_progress& operator+=(T t) { next_count+=t; return *this; }
   inline void complete() { notify(); }

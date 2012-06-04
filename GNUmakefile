@@ -1,5 +1,5 @@
 
-TARGETS = transpose colsum
+TARGETS = transpose colsum fill
 SHARED_SRCS = memmap.cc
 CPPFLAGS=
 WFLAGS=-pedantic -W -Wall

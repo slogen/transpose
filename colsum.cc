@@ -10,16 +10,31 @@
 using namespace memmap;
 using namespace std;
 
+template <typename T>
+struct X {
+  size_t coli;
+  size_t rowi;
+  T* in_ptr;
+  T val;
+};
+
 template <typename T, typename PROGRESS, typename OUT>
 static inline void 
 colsum(T* in, size_t rows, size_t cols, PROGRESS& progress, OUT out) {
   progress.ready();
   for ( size_t coli = 0; coli < cols; ++coli ) {
     T colsum_i = T();
-    auto col_begin = in + coli*rows;
-    auto col_end = col_begin + rows;
-    for ( auto col_ptr = col_begin; col_ptr != col_end; ++col_ptr ) {
-      colsum_i += *col_ptr;
+    for ( size_t rowi = 0; rowi < rows; ++rowi ) {
+      auto col_ptr = in + coli * rows;
+      auto val = *col_ptr;
+      colsum_i += val;
+      X<T> c = { 
+	coli,
+	rowi,
+	col_ptr,
+	val
+      };
+      progress.process(c);
       ++progress;
     }
     *(out++) = colsum_i;
@@ -48,13 +63,43 @@ colsum(string infile, size_t rows, size_t cols, PROGRESS& progress, OUT out) {
   colsum(in_ptr, rows, cols, progress, out);
 }
 
+template<int seconds>
+class track_progress2: public progress<seconds>
+{
+public:
+  const bool track_items;
+  inline track_progress2(): track_items(false) {}
+  template<typename T>
+  inline void process(const X<T>& x) {
+    if ( track_items )
+      std::cerr << x.in_ptr 
+		<< "@[" << x.rowi << "," << x.coli 
+		<< "]:= " << x.val
+		<< std::endl;
+  }
+};
+
 int main(int argc, char *argv[]) {
   typedef double T;
-  (void)argc;
-  (void)argv;
-  progress<1> tracker;
+  size_t rows = 0;
+  size_t cols = 0;
+  std::string infile = "";
+  for ( int i = 1; i < argc; ++i ) {
+    const std::string arg(argv[i]);
+    if ( arg == "--rows" )
+      rows = atol(argv[++i]);
+    else if ( arg == "--cols" )
+      cols = atol(argv[++i]);
+    else if ( arg == "--in" || arg == "-i" )
+      infile = argv[++i];
+    else
+      throw std::runtime_error(str::sbuf() << "unknown arg: " << argv[i]);
+  }
+  track_progress2<1> tracker;
   tracker.value_size = sizeof(T);
   std::vector<T> sums;
-  colsum<T>("data.in", 100000, 0, tracker, back_inserter(sums));
+  colsum<T>(infile, rows, cols, tracker, back_inserter(sums));
+  for ( size_t i = 0; i < sums.size() && i < 5; ++i )
+    std::cout << "col:" << i << " sum:" << sums[i] << std::endl;
   return 0;
 }

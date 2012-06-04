@@ -18,6 +18,7 @@
 onebigmmap
 transpose
 colsum
+fill
 
 # Tests
 *.log
