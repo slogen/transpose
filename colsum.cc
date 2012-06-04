@@ -1,6 +1,7 @@
 #include <memory>
 #include <vector>
 #include <iterator>
+#include <algorithm>
 
 #include "memmap.hh"
 #include "sbuf.hh"
@@ -13,9 +14,9 @@ using namespace std;
 template <typename T>
 struct X {
   size_t coli;
-  size_t rowi;
-  T* in_ptr;
-  T val;
+  T* col_begin;
+  T* col_end;
+  T sum;
 };
 
 template <typename T, typename PROGRESS, typename OUT>
@@ -23,21 +24,13 @@ static inline void
 colsum(T* in, size_t rows, size_t cols, PROGRESS& progress, OUT out) {
   progress.ready();
   for ( size_t coli = 0; coli < cols; ++coli ) {
-    T colsum_i = T();
-    for ( size_t rowi = 0; rowi < rows; ++rowi ) {
-      auto col_ptr = in + coli * rows;
-      auto val = *col_ptr;
-      colsum_i += val;
-      X<T> c = { 
-	coli,
-	rowi,
-	col_ptr,
-	val
-      };
-      progress.process(c);
-      ++progress;
-    }
+    T* col_begin = in + coli*rows;
+    T* col_end = col_begin + rows;
+    T colsum_i = std::accumulate(col_begin, col_end, T());
+    X<T> x { coli, col_begin, col_end, colsum_i };
+    progress.process(x);
     *(out++) = colsum_i;
+    progress += (col_end - col_begin);
   }
   progress.complete();
 }
@@ -68,13 +61,15 @@ class track_progress2: public progress<seconds>
 {
 public:
   const bool track_items;
-  inline track_progress2(): track_items(false) {}
+  inline track_progress2(): 
+    track_items(false) 
+  {}
   template<typename T>
   inline void process(const X<T>& x) {
     if ( track_items )
-      std::cerr << x.in_ptr 
-		<< "@[" << x.rowi << "," << x.coli 
-		<< "]:= " << x.val
+      std::cerr << x.coli << ": " 
+		<< "@" << x.col_begin << "->" << x.col_end
+		<< ": sum:" << x.sum
 		<< std::endl;
   }
 };
@@ -99,7 +94,8 @@ int main(int argc, char *argv[]) {
   tracker.value_size = sizeof(T);
   std::vector<T> sums;
   colsum<T>(infile, rows, cols, tracker, back_inserter(sums));
-  for ( size_t i = 0; i < sums.size() && i < 5; ++i )
+  std::cout << std::fixed << std::setprecision(0);
+  for ( size_t i = 0; i < sums.size(); ++i )
     std::cout << "col:" << i << " sum:" << sums[i] << std::endl;
   return 0;
 }
