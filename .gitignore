@@ -25,6 +25,7 @@ fill
 *.t
 .*
 *.in
+data.*
 
 
 # Emacs
