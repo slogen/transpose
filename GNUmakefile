@@ -1,11 +1,13 @@
 
+TESTROWS?=1000
+TESTCOLS?=1000
+
 TARGETS = transpose colsum fill
 SHARED_SRCS = memmap.cc
 CPPFLAGS=
 WFLAGS=-pedantic -W -Wall
 OFLAGS?=-O0
 GFLAGS=-ggdb
-
 
 SHARED_OBJS = $(SHARED_SRCS:.cc=.o)
 
@@ -26,18 +28,28 @@ $(TARGETS): $(SHARED_SRCS:.cc=.o)
 	  rm -f $*.d
 
 clean:
-	$(RM) *.o *~ *.P .#* $(TARGETS)
+	$(RM) *.o *~ *.P .#* *.log $(TARGETS)
 
 realclean: clean
-	$(RM) *.png *.mpg *.trace*
+	$(RM) *.png *.mpg *.trace* data.*
 
-test:	$(TARGETS)
-	@date; \
-	for x in $(realpath $^); do \
-	  echo $$x; \
-	  $$x --rows 10000 --cols 10000 --strategy mmap1; \
-	  date; \
-	done
 
+TESTFILL=data.$(TESTROWS)x$(TESTCOLS)
+$(TESTFILL): fill
+	./fill --rows $(TESTROWS) --cols $(TESTCOLS) -o $@ 2>&1 \
+	| tee "$@".log
+TESTTRANS=$(TESTFILL)T
+$(TESTTRANS): $(TESTFILL) transpose
+	./transpose --rows $(TESTROWS) --cols $(TESTCOLS) -i $< -o $@ 2>&1 \
+	| tee "$@".log
+TESTCOLSUM=$(TESTTRANS).sum
+$(TESTCOLSUM): $(TESTTRANS) colsum
+	./colsum --rows $(TESTROWS) --cols $(TESTCOLS) -i $< 2>&1 -o $@ \
+	| tee "$@".log
+
+test: $(TESTFILL) $(TESTCOLSUM) $(TESTTRANS)
+
+hugetest:
+	TESTROWS=1000000 TESTCOLS=3000 $(MAKE) test
 
 -include $(patsubst %.cc,%.P,$(wildcard *.cc))
